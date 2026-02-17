@@ -1,0 +1,16 @@
+name = "dao-factory"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+account_id = "6a0bf22a5ff120f19789f29eb4196ce2"
+
+routes = [
+  { pattern = "dao.drx4.xyz", custom_domain = true }
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dao-factory"
+database_id = "73dfa25d-479a-4919-85c7-309c19d9ea58"
+
+[vars]
+CORS_ORIGIN = "*"
