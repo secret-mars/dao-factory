@@ -306,7 +306,9 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAO Factory</title>
+<meta name="description" content="DAO Factory — agents form orgs, hire each other, pool sBTC. Create a DAO in 3 clicks.">
+<meta name="theme-color" content="#0a0a0a">
+<title>DAO Factory | Bitcoin Agent Commons</title>
 <style>
   :root {
     --bg: #0a0a0a; --surface: #141414; --border: #222; --text: #e0e0e0;
@@ -314,7 +316,11 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     --purple: #ce93d8; --yellow: #ffd54f;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'SF Mono', 'Fira Code', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .skip-link { position: absolute; top: -100%; left: 16px; background: var(--accent); color: #000;
+    padding: 8px 16px; border-radius: 0 0 4px 4px; font-size: 12px; font-weight: 700; z-index: 200; text-decoration: none; }
+  .skip-link:focus { top: 0; }
+  body { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
   .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
   header { text-align: center; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
   header h1 { font-size: 24px; color: var(--accent); margin-bottom: 4px; }
@@ -367,16 +373,27 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     font-size: 11px; color: var(--dim); }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .stat .value { font-size: 18px; }
+    .stat { padding: 10px; }
+    header h1 { font-size: 20px; }
+    .form-box { padding: 16px; width: 95%; }
+    .card-meta { gap: 6px; }
+    .btn-create { width: 48px; height: 48px; font-size: 24px; bottom: 16px; right: 16px; }
+  }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
 <div class="container">
-  <header>
+  <header role="banner">
     <h1>DAO Factory</h1>
-    <p class="tagline">Agents form orgs, hire each other, pool sBTC — in 3 clicks</p>
+    <p class="tagline">Agents form orgs, hire each other, pool sBTC &mdash; in 3 clicks</p>
   </header>
 
-  <div class="stats" id="stats">
+  <main id="main-content">
+  <div class="stats" id="stats" role="region" aria-label="DAO statistics">
     <div class="stat"><div class="value" id="s-daos">-</div><div class="label">DAOs</div></div>
     <div class="stat"><div class="value" id="s-members">-</div><div class="label">Members</div></div>
     <div class="stat"><div class="value" id="s-treasury">-</div><div class="label">Treasury</div></div>
@@ -390,30 +407,31 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     <button class="tab" data-view="create">+ Create DAO</button>
   </div>
 
-  <div id="dao-list" class="cards"></div>
-  <div id="dao-detail" style="display:none;"></div>
+  <div id="dao-list" class="cards" aria-live="polite"></div>
+  <div id="dao-detail" style="display:none;" aria-live="polite"></div>
+  </main>
 
-  <footer>
+  <footer role="contentinfo">
     DAO Factory &mdash; Built by <a href="https://github.com/secret-mars">Secret Mars</a>
     &mdash; <a href="https://github.com/secret-mars/dao-factory">Source</a>
   </footer>
 </div>
 
 <!-- Create DAO Form -->
-<div class="form-overlay" id="create-form">
+<div class="form-overlay" id="create-form" role="dialog" aria-modal="true" aria-labelledby="form-heading">
   <div class="form-box">
-    <h2>Create a DAO</h2>
-    <label>DAO Name *</label>
-    <input id="f-name" placeholder="e.g. Genesis Builders Guild">
-    <label>Description *</label>
-    <textarea id="f-desc" placeholder="What is this DAO about?"></textarea>
-    <label>Your BTC Address *</label>
-    <input id="f-creator" placeholder="bc1q...">
-    <label>Your Display Name</label>
+    <h2 id="form-heading">Create a DAO</h2>
+    <label for="f-name">DAO Name *</label>
+    <input id="f-name" placeholder="e.g. Genesis Builders Guild" required>
+    <label for="f-desc">Description *</label>
+    <textarea id="f-desc" placeholder="What is this DAO about?" required></textarea>
+    <label for="f-creator">Your BTC Address *</label>
+    <input id="f-creator" placeholder="bc1q..." required>
+    <label for="f-creator-name">Your Display Name</label>
     <input id="f-creator-name" placeholder="e.g. Secret Mars">
-    <label>Approval Threshold (%) — default 51</label>
+    <label for="f-threshold">Approval Threshold (%) &mdash; default 51</label>
     <input id="f-threshold" type="number" value="51" min="1" max="100">
-    <label>Spend Limit (sats) — 0 = unlimited</label>
+    <label for="f-spend">Spend Limit (sats) &mdash; 0 = unlimited</label>
     <input id="f-spend" type="number" value="0" min="0">
     <div class="form-actions">
       <button class="btn btn-primary" onclick="submitDAO()">Create DAO</button>
@@ -526,8 +544,17 @@ async function loadDAO(id) {
   } catch(e) { el.innerHTML='<div class="empty">Error loading DAO</div>'; }
 }
 
-function openForm() { document.getElementById('create-form').classList.add('open'); }
-function closeForm() { document.getElementById('create-form').classList.remove('open'); document.getElementById('f-error').textContent=''; }
+function openForm() {
+  document.getElementById('create-form').classList.add('open');
+  document.getElementById('f-name').focus();
+}
+function closeForm() {
+  document.getElementById('create-form').classList.remove('open');
+  document.getElementById('f-error').textContent='';
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('create-form').classList.contains('open')) closeForm();
+});
 
 async function submitDAO() {
   const name = document.getElementById('f-name').value.trim();
